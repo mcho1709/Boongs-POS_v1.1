@@ -1,673 +1,572 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Food Truck POS</title>
-    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6; }
-        
-        .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
-        .card { background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; }
-        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-primary { background: #3b82f6; color: white; }
-        .btn-success { background: #10b981; color: white; }
-        .btn-danger { background: #ef4444; color: white; }
-        .btn-warning { background: #eab308; color: white; }
-        .btn-gray { background: #d1d5db; color: #1f2937; }
-        .btn-block { width: 100%; }
-        
-        .header { background: #3b82f6; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
-        .header.success { background: #10b981; }
-        .header-title { font-size: 1.5rem; font-weight: bold; }
-        .header-buttons { display: flex; gap: 0.5rem; }
-        .header-btn { background: white; color: #3b82f6; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; border: none; cursor: pointer; }
-        .header-btn:hover { background: #f3f4f6; }
-        .header-btn.danger { background: #ef4444; color: white; }
-        
-        .setup-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
-        .setup-card { background: white; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 2rem; max-width: 900px; width: 100%; }
-        .setup-title { font-size: 2rem; font-weight: bold; margin-bottom: 1.5rem; text-align: center; }
-        .form-group { margin-bottom: 1.5rem; }
-        .form-label { display: block; font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; }
-        .form-input { width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; }
-        .form-input:focus { outline: none; border-color: #3b82f6; }
-        
-        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
-        .menu-item { padding: 1rem; border: 2px solid #d1d5db; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s; }
-        .menu-item:hover { border-color: #3b82f6; }
-        .menu-item.selected { border-color: #3b82f6; background: #eff6ff; }
-        .menu-item-header { display: flex; justify-content: space-between; align-items: center; }
-        .menu-item-name { font-weight: 600; }
-        .menu-item-price { display: flex; align-items: center; gap: 0.5rem; }
-        .price-input { width: 4rem; padding: 0.25rem; border: 1px solid #d1d5db; border-radius: 0.25rem; text-align: center; }
-        
-        .live-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; padding: 1rem; }
-        @media (min-width: 1024px) { .live-grid { grid-template-columns: 1fr 1fr; } }
-        
-        .order-header { font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; }
-        .menu-buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
-        .menu-btn { background: #3b82f6; color: white; padding: 1rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-        .menu-btn:hover { background: #2563eb; }
-        .menu-btn-name { font-size: 1rem; }
-        .menu-btn-price { font-size: 0.875rem; margin-top: 0.25rem; }
-        
-        .order-divider { border-top: 2px solid #e5e7eb; padding-top: 1rem; margin-top: 1rem; }
-        .order-title { font-weight: bold; margin-bottom: 0.5rem; }
-        .order-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-        .order-item-info { display: flex; align-items: center; gap: 0.5rem; }
-        .order-item-price { font-weight: 600; }
-        .remove-btn { background: #ef4444; color: white; padding: 0.25rem; border: none; border-radius: 0.25rem; cursor: pointer; }
-        .order-total { border-top: 2px solid #e5e7eb; margin-top: 0.5rem; padding-top: 0.5rem; display: flex; justify-content: space-between; font-size: 1.25rem; font-weight: bold; }
-        .submit-btn { width: 100%; background: #10b981; color: white; padding: 0.75rem; border: none; border-radius: 0.5rem; font-weight: bold; margin-top: 1rem; cursor: pointer; }
-        .submit-btn:hover { background: #059669; }
-        
-        .dockets-header { font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; }
-        .dockets-list { display: flex; flex-direction: column; gap: 0.75rem; }
-        .docket { border: 2px solid #fb923c; background: #ffedd5; padding: 1rem; border-radius: 0.5rem; position: relative; transition: all 0.3s; }
-        .docket.completing { border-color: #4ade80; background: #dcfce7; }
-        .docket-blur { filter: blur(4px); opacity: 0.6; }
-        .undo-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 10; }
-        .undo-btn { background: #eab308; color: white; padding: 1rem 2rem; border: none; border-radius: 0.5rem; font-weight: bold; font-size: 1.25rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .undo-btn:hover { background: #ca8a04; }
-        .docket-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-        .docket-number { font-size: 1.5rem; font-weight: bold; }
-        .docket-time { font-size: 0.875rem; color: #4b5563; }
-        .docket-buttons { display: flex; gap: 0.5rem; }
-        .docket-btn { padding: 0.5rem 0.75rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.875rem; }
-        .docket-btn.cancel { background: #ef4444; color: white; }
-        .docket-btn.complete { background: #10b981; color: white; padding: 0.5rem; }
-        .docket-items { font-size: 0.875rem; margin-top: 0.5rem; }
-        .docket-item { margin-bottom: 0.25rem; }
-        .docket-total { font-size: 1.125rem; font-weight: bold; margin-top: 0.5rem; }
-        
-        .summary-info { margin-bottom: 1rem; color: #4b5563; }
-        .summary-date { font-size: 1.125rem; font-weight: 600; }
-        .summary-location { font-size: 1rem; }
-        .total-sales-title { font-size: 1.875rem; font-weight: bold; margin-bottom: 0.5rem; }
-        .total-sales-amount { font-size: 2.25rem; font-weight: bold; color: #10b981; }
-        .total-sales-count { color: #6b7280; margin-top: 0.5rem; }
-        .breakdown-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; }
-        .breakdown-list { display: flex; flex-direction: column; gap: 0.75rem; }
-        .breakdown-item { padding-bottom: 0.75rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
-        .breakdown-name { font-weight: 600; font-size: 1.125rem; }
-        .breakdown-amount { font-weight: bold; font-size: 1.25rem; }
-        .breakdown-qty { font-size: 0.875rem; color: #6b7280; }
-        
-        .last-dockets { margin-top: 1rem; }
-        .last-docket { border-left: 4px solid #10b981; background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.75rem; }
-        .last-docket-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem; }
-        .last-docket-number { font-size: 1.25rem; font-weight: bold; }
-        .last-docket-time { font-size: 0.875rem; color: #6b7280; margin-left: 0.75rem; }
-        .last-docket-total { font-size: 1.125rem; font-weight: bold; color: #10b981; }
-        .last-docket-items { font-size: 0.875rem; }
-        .last-docket-item { color: #374151; margin-bottom: 0.25rem; }
-        .no-dockets { text-align: center; color: #9ca3af; padding: 2rem; }
-        
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; }
-        .modal { background: white; border-radius: 0.5rem; padding: 1.5rem; max-width: 400px; margin: 1rem; }
-        .modal-title { font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem; }
-        .modal-text { margin-bottom: 1.5rem; color: #6b7280; }
-        .modal-buttons { display: flex; gap: 0.75rem; }
-        .modal-btn { flex: 1; padding: 0.5rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
-        
-        .icon { display: inline-block; vertical-align: middle; }
-    </style>
-</head>
-<body>
-    <div id="root"></div>
+import React, { useState, useEffect } from 'react';
+import { X, Plus, Minus, Check } from 'lucide-react';
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+const MENU_ITEMS = [
+  { name: 'Red Bean', defaultPrice: 5 },
+  { name: 'Custard', defaultPrice: 5 },
+  { name: 'Pizza', defaultPrice: 5 },
+  { name: 'Matcha Red Bean', defaultPrice: 6 },
+  { name: 'O-Maggie', defaultPrice: 7 },
+  { name: 'Dubai Chocolate', defaultPrice: 7 },
+  { name: 'Black Sesame', defaultPrice: 6 },
+  { name: 'Chocolate', defaultPrice: 6 },
+  { name: 'Spicy Pizza', defaultPrice: 6 },
+  { name: 'Chestnut', defaultPrice: 6 },
+  { name: 'Red Bean Mochi', defaultPrice: 6 },
+  { name: 'Matcha Red Bean Mochi', defaultPrice: 7 },
+  { name: 'Black Sesame Mochi', defaultPrice: 7 },
+  { name: 'Dumpling', defaultPrice: 5 }
+];
 
-        const Check = ({ size = 24 }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon">
-                <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-        );
+export default function FoodTruckPOS() {
+  const [screen, setScreen] = useState('setup');
+  const [startingDocket, setStartingDocket] = useState('1');
+  const [location, setLocation] = useState('');
+  const [sessionDate, setSessionDate] = useState('');
+  const [selectedMenus, setSelectedMenus] = useState([]);
+  const [menuPrices, setMenuPrices] = useState({});
+  const [currentDocketNumber, setCurrentDocketNumber] = useState(1);
+  const [liveDockets, setLiveDockets] = useState([]);
+  const [completedDockets, setCompletedDockets] = useState([]);
+  const [completingDockets, setCompletingDockets] = useState([]);
+  const [docketTimers, setDocketTimers] = useState({});
+  const [currentOrder, setCurrentOrder] = useState({});
+  const [confirmModal, setConfirmModal] = useState({ show: false, type: '', docketNumber: null });
 
-        const Minus = ({ size = 24 }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-        );
+  useEffect(() => {
+    const prices = {};
+    MENU_ITEMS.forEach(item => {
+      prices[item.name] = item.defaultPrice;
+    });
+    setMenuPrices(prices);
+  }, []);
 
-        const MENU_ITEMS = [
-          { name: 'Red Bean', defaultPrice: 5 },
-          { name: 'Custard', defaultPrice: 5 },
-          { name: 'Pizza', defaultPrice: 5 },
-          { name: 'Matcha Red Bean', defaultPrice: 6 },
-          { name: 'O-Maggie', defaultPrice: 7 },
-          { name: 'Dubai Chocolate', defaultPrice: 7 },
-          { name: 'Black Sesame', defaultPrice: 6 },
-          { name: 'Chocolate', defaultPrice: 6 },
-          { name: 'Spicy Pizza', defaultPrice: 6 },
-          { name: 'Chestnut', defaultPrice: 6 },
-          { name: 'Red Bean Mochi', defaultPrice: 6 },
-          { name: 'Matcha Red Bean Mochi', defaultPrice: 7 },
-          { name: 'Black Sesame Mochi', defaultPrice: 7 },
-          { name: 'Dumpling', defaultPrice: 5 }
-        ];
+  const toggleMenu = (menuName) => {
+    if (selectedMenus.includes(menuName)) {
+      setSelectedMenus(selectedMenus.filter(m => m !== menuName));
+    } else {
+      setSelectedMenus([...selectedMenus, menuName]);
+    }
+  };
 
-        function FoodTruckPOS() {
-          const [screen, setScreen] = useState('setup');
-          const [startingDocket, setStartingDocket] = useState('1');
-          const [location, setLocation] = useState('');
-          const [sessionDate, setSessionDate] = useState('');
-          const [selectedMenus, setSelectedMenus] = useState([]);
-          const [menuPrices, setMenuPrices] = useState({});
-          const [currentDocketNumber, setCurrentDocketNumber] = useState(1);
-          const [liveDockets, setLiveDockets] = useState([]);
-          const [completedDockets, setCompletedDockets] = useState([]);
-          const [completingDockets, setCompletingDockets] = useState([]);
-          const [docketTimers, setDocketTimers] = useState({});
-          const [currentOrder, setCurrentOrder] = useState({});
-          const [confirmModal, setConfirmModal] = useState({ show: false, type: '', docketNumber: null });
+  const updatePrice = (menuName, price) => {
+    setMenuPrices({ ...menuPrices, [menuName]: parseFloat(price) || 0 });
+  };
 
-          useEffect(() => {
-            const prices = {};
-            MENU_ITEMS.forEach(item => {
-              prices[item.name] = item.defaultPrice;
-            });
-            setMenuPrices(prices);
-          }, []);
+  const startSession = () => {
+    if (selectedMenus.length === 0) {
+      alert('Please select at least one menu item');
+      return;
+    }
+    const today = new Date().toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    setSessionDate(today);
+    setCurrentDocketNumber(parseInt(startingDocket) || 1);
+    setScreen('live');
+  };
 
-          const toggleMenu = (menuName) => {
-            if (selectedMenus.includes(menuName)) {
-              setSelectedMenus(selectedMenus.filter(m => m !== menuName));
-            } else {
-              setSelectedMenus([...selectedMenus, menuName]);
-            }
-          };
+  const getNextDocketNumber = (current) => {
+    const next = current + 1;
+    return next > 100 ? 1 : next;
+  };
 
-          const updatePrice = (menuName, price) => {
-            setMenuPrices({ ...menuPrices, [menuName]: parseFloat(price) || 0 });
-          };
+  const formatDocketNumber = (num) => {
+    return num.toString().padStart(3, '0');
+  };
 
-          const startSession = () => {
-            if (selectedMenus.length === 0) {
-              alert('Please select at least one menu item');
-              return;
-            }
-            const today = new Date().toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            });
-            setSessionDate(today);
-            setCurrentDocketNumber(parseInt(startingDocket) || 1);
-            setScreen('live');
-          };
+  const addToOrder = (menuName) => {
+    setCurrentOrder({
+      ...currentOrder,
+      [menuName]: (currentOrder[menuName] || 0) + 1
+    });
+  };
 
-          const getNextDocketNumber = (current) => {
-            const next = current + 1;
-            return next > 100 ? 1 : next;
-          };
+  const removeFromOrder = (menuName) => {
+    const newOrder = { ...currentOrder };
+    if (newOrder[menuName] > 1) {
+      newOrder[menuName]--;
+    } else {
+      delete newOrder[menuName];
+    }
+    setCurrentOrder(newOrder);
+  };
 
-          const formatDocketNumber = (num) => {
-            return num.toString().padStart(3, '0');
-          };
+  const submitOrder = () => {
+    if (Object.keys(currentOrder).length === 0) {
+      alert('Please add items to the order');
+      return;
+    }
 
-          const addToOrder = (menuName) => {
-            setCurrentOrder({
-              ...currentOrder,
-              [menuName]: (currentOrder[menuName] || 0) + 1
-            });
-          };
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { 
+      hour12: false, 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit' 
+    });
 
-          const removeFromOrder = (menuName) => {
-            const newOrder = { ...currentOrder };
-            if (newOrder[menuName] > 1) {
-              newOrder[menuName]--;
-            } else {
-              delete newOrder[menuName];
-            }
-            setCurrentOrder(newOrder);
-          };
+    const newDocket = {
+      number: formatDocketNumber(currentDocketNumber),
+      items: { ...currentOrder },
+      total: Object.entries(currentOrder).reduce((sum, [item, qty]) => 
+        sum + (menuPrices[item] * qty), 0),
+      time: timeString
+    };
 
-          const submitOrder = () => {
-            if (Object.keys(currentOrder).length === 0) {
-              alert('Please add items to the order');
-              return;
-            }
+    setLiveDockets([...liveDockets, newDocket]);
+    setCurrentDocketNumber(getNextDocketNumber(currentDocketNumber));
+    setCurrentOrder({});
+  };
 
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('en-US', { 
-              hour12: false, 
-              hour: '2-digit', 
-              minute: '2-digit', 
-              second: '2-digit' 
-            });
+  const completeDocket = (docketNumber) => {
+    const docket = liveDockets.find(d => d.number === docketNumber);
+    if (docket && !completingDockets.includes(docketNumber)) {
+      setCompletingDockets([...completingDockets, docketNumber]);
+      
+      const timerId = setTimeout(() => {
+        setCompletingDockets(prev => prev.filter(d => d !== docketNumber));
+        setCompletedDockets(prev => [...prev, docket]);
+        setLiveDockets(prev => prev.filter(d => d.number !== docketNumber));
+        setDocketTimers(prev => {
+          const newTimers = { ...prev };
+          delete newTimers[docketNumber];
+          return newTimers;
+        });
+      }, 5000);
+      
+      setDocketTimers(prev => ({ ...prev, [docketNumber]: timerId }));
+    }
+  };
 
-            const newDocket = {
-              number: formatDocketNumber(currentDocketNumber),
-              items: { ...currentOrder },
-              total: Object.entries(currentOrder).reduce((sum, [item, qty]) => 
-                sum + (menuPrices[item] * qty), 0),
-              time: timeString
-            };
+  const revertDocket = (docketNumber) => {
+    // Clear the timer
+    if (docketTimers[docketNumber]) {
+      clearTimeout(docketTimers[docketNumber]);
+      setDocketTimers(prev => {
+        const newTimers = { ...prev };
+        delete newTimers[docketNumber];
+        return newTimers;
+      });
+    }
+    // Remove from completing state
+    setCompletingDockets(prev => prev.filter(d => d !== docketNumber));
+  };
 
-            setLiveDockets([...liveDockets, newDocket]);
-            setCurrentDocketNumber(getNextDocketNumber(currentDocketNumber));
-            setCurrentOrder({});
-          };
+  const cancelDocket = (docketNumber) => {
+    console.log('Cancel button clicked for docket:', docketNumber);
+    setConfirmModal({ show: true, type: 'cancel', docketNumber });
+  };
 
-          const completeDocket = (docketNumber) => {
-            const docket = liveDockets.find(d => d.number === docketNumber);
-            if (docket && !completingDockets.includes(docketNumber)) {
-              setCompletingDockets([...completingDockets, docketNumber]);
-              
-              const timerId = setTimeout(() => {
-                setCompletingDockets(prev => prev.filter(d => d !== docketNumber));
-                setCompletedDockets(prev => [...prev, docket]);
-                setLiveDockets(prev => prev.filter(d => d.number !== docketNumber));
-                setDocketTimers(prev => {
-                  const newTimers = { ...prev };
-                  delete newTimers[docketNumber];
-                  return newTimers;
-                });
-              }, 5000);
-              
-              setDocketTimers(prev => ({ ...prev, [docketNumber]: timerId }));
-            }
-          };
+  const confirmCancel = () => {
+    const docketNumber = confirmModal.docketNumber;
+    if (docketTimers[docketNumber]) {
+      clearTimeout(docketTimers[docketNumber]);
+      setDocketTimers(prev => {
+        const newTimers = { ...prev };
+        delete newTimers[docketNumber];
+        return newTimers;
+      });
+    }
+    setLiveDockets(prev => prev.filter(d => d.number !== docketNumber));
+    setCompletingDockets(prev => prev.filter(d => d !== docketNumber));
+    setConfirmModal({ show: false, type: '', docketNumber: null });
+    console.log('Docket cancelled');
+  };
 
-          const revertDocket = (docketNumber) => {
-            if (docketTimers[docketNumber]) {
-              clearTimeout(docketTimers[docketNumber]);
-              setDocketTimers(prev => {
-                const newTimers = { ...prev };
-                delete newTimers[docketNumber];
-                return newTimers;
-              });
-            }
-            setCompletingDockets(prev => prev.filter(d => d !== docketNumber));
-          };
+  const resetData = () => {
+    setConfirmModal({ show: true, type: 'reset', docketNumber: null });
+  };
 
-          const cancelDocket = (docketNumber) => {
-            setConfirmModal({ show: true, type: 'cancel', docketNumber });
-          };
+  const confirmReset = () => {
+    setCompletedDockets([]);
+    setLiveDockets([]);
+    setCurrentOrder({});
+    setConfirmModal({ show: false, type: '', docketNumber: null });
+  };
 
-          const confirmCancel = () => {
-            const docketNumber = confirmModal.docketNumber;
-            if (docketTimers[docketNumber]) {
-              clearTimeout(docketTimers[docketNumber]);
-              setDocketTimers(prev => {
-                const newTimers = { ...prev };
-                delete newTimers[docketNumber];
-                return newTimers;
-              });
-            }
-            setLiveDockets(prev => prev.filter(d => d.number !== docketNumber));
-            setCompletingDockets(prev => prev.filter(d => d !== docketNumber));
-            setConfirmModal({ show: false, type: '', docketNumber: null });
-          };
+  const getSortedItems = (items) => {
+    const menuOrder = MENU_ITEMS.map(m => m.name);
+    return Object.entries(items).sort((a, b) => {
+      return menuOrder.indexOf(a[0]) - menuOrder.indexOf(b[0]);
+    });
+  };
 
-          const resetData = () => {
-            setConfirmModal({ show: true, type: 'reset', docketNumber: null });
-          };
+  const getSummary = () => {
+    const summary = {};
+    let totalSales = 0;
 
-          const confirmReset = () => {
-            setCompletedDockets([]);
-            setLiveDockets([]);
-            setCurrentOrder({});
-            setConfirmModal({ show: false, type: '', docketNumber: null });
-          };
+    completedDockets.forEach(docket => {
+      Object.entries(docket.items).forEach(([item, qty]) => {
+        if (!summary[item]) {
+          summary[item] = { quantity: 0, amount: 0 };
+        }
+        summary[item].quantity += qty;
+        summary[item].amount += qty * menuPrices[item];
+        totalSales += qty * menuPrices[item];
+      });
+    });
 
-          const getSortedItems = (items) => {
-            const menuOrder = MENU_ITEMS.map(m => m.name);
-            return Object.entries(items).sort((a, b) => {
-              return menuOrder.indexOf(a[0]) - menuOrder.indexOf(b[0]);
-            });
-          };
+    return { summary, totalSales };
+  };
 
-          const getSummary = () => {
-            const summary = {};
-            let totalSales = 0;
+  if (screen === 'setup') {
+    return (
+      <div className="min-h-screen bg-gray-100 p-4">
+        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+          <h1 className="text-3xl font-bold mb-6 text-center">Setup</h1>
+          
+          <div className="mb-6">
+            <label className="block text-lg font-semibold mb-2">Starting Docket Number</label>
+            <input
+              type="number"
+              value={startingDocket}
+              onChange={(e) => setStartingDocket(e.target.value)}
+              className="w-full p-3 border-2 border-gray-300 rounded-lg text-lg"
+              min="1"
+              max="100"
+            />
+          </div>
 
-            completedDockets.forEach(docket => {
-              Object.entries(docket.items).forEach(([item, qty]) => {
-                if (!summary[item]) {
-                  summary[item] = { quantity: 0, amount: 0 };
-                }
-                summary[item].quantity += qty;
-                summary[item].amount += qty * menuPrices[item];
-                totalSales += qty * menuPrices[item];
-              });
-            });
+          <div className="mb-6">
+            <label className="block text-lg font-semibold mb-2">Location</label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Enter location for record"
+              className="w-full p-3 border-2 border-gray-300 rounded-lg text-lg"
+            />
+          </div>
 
-            return { summary, totalSales };
-          };
-
-          if (screen === 'setup') {
-            return (
-              <div className="setup-container">
-                <div className="setup-card">
-                  <h1 className="setup-title">Setup</h1>
-                  
-                  <div className="form-group">
-                    <label className="form-label">Starting Docket Number</label>
-                    <input
-                      type="number"
-                      value={startingDocket}
-                      onChange={(e) => setStartingDocket(e.target.value)}
-                      className="form-input"
-                      min="1"
-                      max="100"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Location</label>
-                    <input
-                      type="text"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      placeholder="Enter location for record"
-                      className="form-input"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <h2 className="form-label">Select Menu Items & Set Prices</h2>
-                    <div className="menu-grid">
-                      {MENU_ITEMS.map(item => (
-                        <div
-                          key={item.name}
-                          className={`menu-item ${selectedMenus.includes(item.name) ? 'selected' : ''}`}
-                          onClick={() => toggleMenu(item.name)}
-                        >
-                          <div className="menu-item-header">
-                            <span className="menu-item-name">{item.name}</span>
-                            <div className="menu-item-price">
-                              <span>$</span>
-                              <input
-                                type="number"
-                                value={menuPrices[item.name] || ''}
-                                onChange={(e) => {
-                                  e.stopPropagation();
-                                  updatePrice(item.name, e.target.value);
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                                className="price-input"
-                                step="0.5"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <button onClick={startSession} className="btn btn-success btn-block" style={{fontSize: '1.25rem', padding: '1rem'}}>
-                    Start Session
-                  </button>
-                </div>
-              </div>
-            );
-          }
-
-          if (screen === 'live') {
-            const orderTotal = Object.entries(currentOrder).reduce((sum, [item, qty]) => 
-              sum + (menuPrices[item] * qty), 0);
-
-            return (
-              <div style={{minHeight: '100vh'}}>
-                {confirmModal.show && (
-                  <div className="modal-overlay">
-                    <div className="modal">
-                      <h3 className="modal-title">
-                        {confirmModal.type === 'cancel' 
-                          ? `Cancel Docket #${confirmModal.docketNumber}?` 
-                          : 'Reset All Data?'}
-                      </h3>
-                      <p className="modal-text">
-                        {confirmModal.type === 'cancel'
-                          ? 'This docket will be permanently deleted.'
-                          : 'All sales data will be permanently deleted.'}
-                      </p>
-                      <div className="modal-buttons">
-                        <button
-                          onClick={() => setConfirmModal({ show: false, type: '', docketNumber: null })}
-                          className="modal-btn btn-gray"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={confirmModal.type === 'cancel' ? confirmCancel : confirmReset}
-                          className="modal-btn btn-danger"
-                        >
-                          Confirm
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="header">
-                  <h1 className="header-title">Live Dockets - {location}</h1>
-                  <div className="header-buttons">
-                    <button onClick={() => setScreen('summary')} className="header-btn">
-                      Summary
-                    </button>
-                    <button onClick={() => setScreen('setup')} className="header-btn danger">
-                      Setup
-                    </button>
-                  </div>
-                </div>
-
-                <div className="live-grid">
-                  <div>
-                    <div className="card">
-                      <h2 className="order-header">New Order - Docket #{formatDocketNumber(currentDocketNumber)}</h2>
-                      
-                      <div className="menu-buttons">
-                        {selectedMenus.map(menu => (
-                          <button
-                            key={menu}
-                            onClick={() => addToOrder(menu)}
-                            className="menu-btn"
-                          >
-                            <div className="menu-btn-name">{menu}</div>
-                            <div className="menu-btn-price">${menuPrices[menu]}</div>
-                          </button>
-                        ))}
-                      </div>
-
-                      {Object.keys(currentOrder).length > 0 && (
-                        <div className="order-divider">
-                          <h3 className="order-title">Current Order:</h3>
-                          {getSortedItems(currentOrder).map(([item, qty]) => (
-                            <div key={item} className="order-item">
-                              <span>{item} x {qty}</span>
-                              <div className="order-item-info">
-                                <span className="order-item-price">${(menuPrices[item] * qty).toFixed(2)}</span>
-                                <button onClick={() => removeFromOrder(item)} className="remove-btn">
-                                  <Minus size={16} />
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                          <div className="order-total">
-                            <span>Total:</span>
-                            <span>${orderTotal.toFixed(2)}</span>
-                          </div>
-                          <button onClick={submitOrder} className="submit-btn">
-                            Submit Order
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="card">
-                      <h2 className="dockets-header">Waiting Dockets ({liveDockets.length})</h2>
-                      <div className="dockets-list">
-                        {liveDockets.map(docket => {
-                          const isCompleting = completingDockets.includes(docket.number);
-                          return (
-                            <div key={docket.number} className={`docket ${isCompleting ? 'completing' : ''}`}>
-                              {isCompleting && (
-                                <div className="undo-overlay">
-                                  <button onClick={() => revertDocket(docket.number)} className="undo-btn">
-                                    UNDO
-                                  </button>
-                                </div>
-                              )}
-                              <div>
-                                <div className="docket-header">
-                                  <div>
-                                    <span className="docket-number">#{docket.number}</span>
-                                    <div className="docket-time">{docket.time}</div>
-                                  </div>
-                                  {!isCompleting && (
-                                    <div className="docket-buttons">
-                                      <button
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          e.stopPropagation();
-                                          cancelDocket(docket.number);
-                                        }}
-                                        className="docket-btn cancel"
-                                      >
-                                        Cancel
-                                      </button>
-                                      <button
-                                        onClick={() => completeDocket(docket.number)}
-                                        className="docket-btn complete"
-                                      >
-                                        <Check size={20} />
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                                <div className={isCompleting ? 'docket-blur' : ''}>
-                                  <div className="docket-items">
-                                    {getSortedItems(docket.items).map(([item, qty]) => (
-                                      <div key={item} className="docket-item">
-                                        {item} x {qty}
-                                      </div>
-                                    ))}
-                                  </div>
-                                  <div className="docket-total">Total: ${docket.total.toFixed(2)}</div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-4">Select Menu Items & Set Prices</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {MENU_ITEMS.map(item => (
+                <div
+                  key={item.name}
+                  className={`p-4 border-2 rounded-lg cursor-pointer transition ${
+                    selectedMenus.includes(item.name)
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 bg-white'
+                  }`}
+                  onClick={() => toggleMenu(item.name)}
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-semibold">{item.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">$</span>
+                      <input
+                        type="number"
+                        value={menuPrices[item.name] || ''}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          updatePrice(item.name, e.target.value);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-16 p-1 border border-gray-300 rounded text-center"
+                        step="0.5"
+                      />
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          }
-
-          if (screen === 'summary') {
-        const { summary, totalSales } = getSummary();
-
-        return (
-          <div style={{minHeight: '100vh'}}>
-            {confirmModal.show && (
-              <div className="modal-overlay">
-                <div className="modal">
-                  <h3 className="modal-title">Reset All Data?</h3>
-                  <p className="modal-text">All sales data will be permanently deleted. This cannot be undone.</p>
-                  <div className="modal-buttons">
-                    <button
-                      onClick={() => setConfirmModal({ show: false, type: '', docketNumber: null })}
-                      className="modal-btn btn-gray"
-                    >
-                      Cancel
-                    </button>
-                    <button onClick={confirmReset} className="modal-btn btn-danger">
-                      Confirm
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            <div className="header success">
-              <h1 className="header-title">Sales Summary - {location}</h1>
-              <div className="header-buttons">
-                <button onClick={() => setScreen('live')} className="header-btn">
-                  Live Dockets
-                </button>
-                <button onClick={resetData} className="header-btn danger">
-                  Reset Data
-                </button>
-              </div>
+              ))}
             </div>
+          </div>
 
-            <div className="container" style={{maxWidth: '1000px'}}>
-              <div className="card" style={{marginBottom: '1rem'}}>
-                <div className="summary-info">
-                  <div className="summary-date">{sessionDate}</div>
-                  <div className="summary-location">Location: {location || 'Not specified'}</div>
-                </div>
-                <h2 className="total-sales-title">Total Sales</h2>
-                <div className="total-sales-amount">${totalSales.toFixed(2)}</div>
-                <div className="total-sales-count">Completed Orders: {completedDockets.length}</div>
-              </div>
+          <button
+            onClick={startSession}
+            className="w-full bg-green-500 text-white py-4 rounded-lg text-xl font-bold hover:bg-green-600 transition"
+          >
+            Start Session
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-              <div className="card">
-                <h2 className="breakdown-title">Menu Breakdown</h2>
-                <div className="breakdown-list">
-                  {Object.entries(summary).map(([item, data]) => (
-                    <div key={item} className="breakdown-item">
-                      <span className="breakdown-name">{item}</span>
-                      <div style={{textAlign: 'right'}}>
-                        <div className="breakdown-amount">${data.amount.toFixed(2)}</div>
-                        <div className="breakdown-qty">Qty: {data.quantity}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+  if (screen === 'live') {
+    const orderTotal = Object.entries(currentOrder).reduce((sum, [item, qty]) => 
+      sum + (menuPrices[item] * qty), 0);
 
-              <div className="card last-dockets">
-                <h2 className="breakdown-title">Last 20 Dockets</h2>
-                <div>
-                  {completedDockets.slice(-20).reverse().map(docket => (
-                    <div key={docket.number} className="last-docket">
-                      <div className="last-docket-header">
-                        <div>
-                          <span className="last-docket-number">#{docket.number}</span>
-                          <span className="last-docket-time">{docket.time}</span>
-                        </div>
-                        <div className="last-docket-total">${docket.total.toFixed(2)}</div>
-                      </div>
-                      <div className="last-docket-items">
-                        {getSortedItems(docket.items).map(([item, qty]) => (
-                          <div key={item} className="last-docket-item">
-                            {item} x {qty}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                  {completedDockets.length === 0 && (
-                    <div className="no-dockets">No completed dockets yet</div>
-                  )}
-                </div>
+    return (
+      <div className="min-h-screen bg-gray-100">
+        {confirmModal.show && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
+              <h3 className="text-xl font-bold mb-4">
+                {confirmModal.type === 'cancel' 
+                  ? `Cancel Docket #${confirmModal.docketNumber}?` 
+                  : 'Reset All Data?'}
+              </h3>
+              <p className="mb-6 text-gray-600">
+                {confirmModal.type === 'cancel'
+                  ? 'This docket will be permanently deleted.'
+                  : 'All sales data will be permanently deleted.'}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmModal({ show: false, type: '', docketNumber: null })}
+                  className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg font-semibold hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmModal.type === 'cancel' ? confirmCancel : confirmReset}
+                  className="flex-1 bg-red-500 text-white py-2 rounded-lg font-semibold hover:bg-red-600"
+                >
+                  Confirm
+                </button>
               </div>
             </div>
           </div>
-        );
-      }
-    }
+        )}
+        
+        <div className="bg-blue-600 text-white p-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Live Dockets - {location}</h1>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setScreen('summary')}
+              className="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100"
+            >
+              Summary
+            </button>
+            <button
+              onClick={() => setScreen('setup')}
+              className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600"
+            >
+              Setup
+            </button>
+          </div>
+        </div>
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<FoodTruckPOS />);
-</script>
-</body>    
-</html>
-</parameter>
+        <div className="p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <div className="bg-white rounded-lg shadow-lg p-6 mb-4">
+              <h2 className="text-2xl font-bold mb-4">New Order - Docket #{formatDocketNumber(currentDocketNumber)}</h2>
+              
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                {selectedMenus.map(menu => (
+                  <button
+                    key={menu}
+                    onClick={() => addToOrder(menu)}
+                    className="bg-blue-500 text-white p-4 rounded-lg font-semibold hover:bg-blue-600 transition"
+                  >
+                    {menu}
+                    <div className="text-sm">${menuPrices[menu]}</div>
+                  </button>
+                ))}
+              </div>
+
+              {Object.keys(currentOrder).length > 0 && (
+                <div className="border-t-2 pt-4">
+                  <h3 className="font-bold mb-2">Current Order:</h3>
+                  {getSortedItems(currentOrder).map(([item, qty]) => (
+                    <div key={item} className="flex justify-between items-center mb-2">
+                      <span>{item} x {qty}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">${(menuPrices[item] * qty).toFixed(2)}</span>
+                        <button
+                          onClick={() => removeFromOrder(item)}
+                          className="bg-red-500 text-white p-1 rounded hover:bg-red-600"
+                        >
+                          <Minus size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="border-t-2 mt-2 pt-2 flex justify-between text-xl font-bold">
+                    <span>Total:</span>
+                    <span>${orderTotal.toFixed(2)}</span>
+                  </div>
+                  <button
+                    onClick={submitOrder}
+                    className="w-full bg-green-500 text-white py-3 rounded-lg font-bold mt-4 hover:bg-green-600 transition"
+                  >
+                    Submit Order
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-2xl font-bold mb-4">Waiting Dockets ({liveDockets.length})</h2>
+              <div className="space-y-3">
+                {liveDockets.map(docket => {
+                  const isCompleting = completingDockets.includes(docket.number);
+                  return (
+                    <div 
+                      key={docket.number} 
+                      className={`border-2 p-4 rounded-lg relative transition-all ${
+                        isCompleting 
+                          ? 'border-green-400 bg-green-50' 
+                          : 'border-orange-400 bg-orange-50'
+                      }`}
+                    >
+                      {isCompleting && (
+                        <div className="absolute inset-0 flex items-center justify-center z-10 backdrop-blur-none">
+                          <button
+                            onClick={() => revertDocket(docket.number)}
+                            className="bg-yellow-500 text-white px-8 py-4 rounded-lg font-bold text-xl hover:bg-yellow-600 shadow-xl"
+                          >
+                            UNDO
+                          </button>
+                        </div>
+                      )}
+                      <div className={isCompleting ? '' : ''}>
+                        <div className="flex justify-between items-center mb-2">
+                          <div>
+                            <span className="text-2xl font-bold">#{docket.number}</span>
+                            <div className="text-sm text-gray-600">{docket.time}</div>
+                          </div>
+                          {!isCompleting && (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  cancelDocket(docket.number);
+                                }}
+                                className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 text-sm font-semibold"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => completeDocket(docket.number)}
+                                className="bg-green-500 text-white p-2 rounded-lg hover:bg-green-600"
+                              >
+                                <Check size={20} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        <div className={isCompleting ? 'blur-sm opacity-60' : ''}>
+                          {getSortedItems(docket.items).map(([item, qty]) => (
+                            <div key={item} className="text-sm">
+                              {item} x {qty}
+                            </div>
+                          ))}
+                          <div className="text-lg font-bold mt-2">Total: ${docket.total.toFixed(2)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === 'summary') {
+    const { summary, totalSales } = getSummary();
+
+    return (
+      <div className="min-h-screen bg-gray-100">
+        {confirmModal.show && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
+              <h3 className="text-xl font-bold mb-4">Reset All Data?</h3>
+              <p className="mb-6 text-gray-600">All sales data will be permanently deleted. This cannot be undone.</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmModal({ show: false, type: '', docketNumber: null })}
+                  className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg font-semibold hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmReset}
+                  className="flex-1 bg-red-500 text-white py-2 rounded-lg font-semibold hover:bg-red-600"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <div className="bg-green-600 text-white p-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Sales Summary - {location}</h1>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setScreen('live')}
+              className="bg-white text-green-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100"
+            >
+              Live Dockets
+            </button>
+            <button
+              onClick={resetData}
+              className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600"
+            >
+              Reset Data
+            </button>
+          </div>
+        </div>
+
+        <div className="p-4 max-w-4xl mx-auto">
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-4">
+            <div className="mb-4 text-gray-600">
+              <div className="text-lg font-semibold">{sessionDate}</div>
+              <div className="text-md">Location: {location || 'Not specified'}</div>
+            </div>
+            <h2 className="text-3xl font-bold mb-2">Total Sales</h2>
+            <div className="text-4xl font-bold text-green-600">${totalSales.toFixed(2)}</div>
+            <div className="text-gray-600 mt-2">Completed Orders: {completedDockets.length}</div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-2xl font-bold mb-4">Menu Breakdown</h2>
+            <div className="space-y-3">
+              {Object.entries(summary).map(([item, data]) => (
+                <div key={item} className="border-b pb-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-lg">{item}</span>
+                    <div className="text-right">
+                      <div className="font-bold text-xl">${data.amount.toFixed(2)}</div>
+                      <div className="text-sm text-gray-600">Qty: {data.quantity}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-lg p-6 mt-4">
+            <h2 className="text-2xl font-bold mb-4">Last 20 Dockets</h2>
+            <div className="space-y-3">
+              {completedDockets.slice(-20).reverse().map(docket => (
+                <div key={docket.number} className="border-l-4 border-green-500 bg-gray-50 p-4 rounded">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <span className="text-xl font-bold">#{docket.number}</span>
+                      <span className="text-sm text-gray-600 ml-3">{docket.time}</span>
+                    </div>
+                    <div className="text-lg font-bold text-green-600">${docket.total.toFixed(2)}</div>
+                  </div>
+                  <div className="text-sm space-y-1">
+                    {getSortedItems(docket.items).map(([item, qty]) => (
+                      <div key={item} className="text-gray-700">
+                        {item} x {qty}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {completedDockets.length === 0 && (
+                <div className="text-center text-gray-400 py-8">No completed dockets yet</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
