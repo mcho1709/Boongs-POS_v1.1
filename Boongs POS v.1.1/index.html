@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="FT POS">
+    <title>Food Truck POS</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
+        
+        .card { background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; }
+        
+        .header { background: #3b82f6; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+        .header.success { background: #10b981; }
+        .header-title { font-size: 1.5rem; font-weight: bold; }
+        .header-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .header-btn { background: white; color: #3b82f6; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; border: none; cursor: pointer; font-size: 0.9rem; }
+        .header-btn:hover { background: #f3f4f6; }
+        .header-btn.danger { background: #ef4444; color: white; }
+        .header-btn.export { background: #8b5cf6; color: white; }
+        
+        .setup-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+        .setup-card { background: white; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 2rem; max-width: 900px; width: 100%; }
+        .setup-title { font-size: 2rem; font-weight: bold; margin-bottom: 1.5rem; text-align: center; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-label { display: block; font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .form-input { width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; }
+        .form-input:focus { outline: none; border-color: #3b82f6; }
+        .form-hint { font-size: 0.8rem; color: #6b7280; margin-top: 0.35rem; }
+        
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
+        .menu-item { padding: 1rem; border: 2px solid #d1d5db; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s; }
+        .menu-item:hover { border-color: #3b82f6; }
+        .menu-item.selected { border-color: #3b82f6; background: #eff6ff; }
+        .menu-item-header { display: flex; justify-content: space-between; align-items: center; }
+        .menu-item-name { font-weight: 600; }
+        .menu-item-price { display: flex; align-items: center; gap: 0.5rem; }
+        .price-input { width: 4rem; padding: 0.25rem; border: 1px solid #d1d5db; border-radius: 0.25rem; text-align: center; }
+        
+        .live-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; padding: 1rem; }
+        @media (min-width: 1024px) { .live-grid { grid-template-columns: 1fr 1fr; } }
+        
+        .order-header { font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; }
+        .menu-buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
+        .menu-btn { background: #3b82f6; color: white; padding: 1rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .menu-btn:hover { background: #2563eb; }
+        .menu-btn-name { font-size: 1rem; }
+        .menu-btn-price { font-size: 0.875rem; margin-top: 0.25rem; }
+        
+        .order-divider { border-top: 2px solid #e5e7eb; padding-top: 1rem; margin-top: 1rem; }
+        .order-title { font-weight: bold; margin-bottom: 0.5rem; }
+        .order-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .order-item-info { display: flex; align-items: center; gap: 0.5rem; }
+        .order-item-price { font-weight: 600; }
+        .remove-btn { background: #ef4444; color: white; padding: 0.25rem 0.5rem; border: none; border-radius: 0.25rem; cursor: pointer; }
+        .order-total { border-top: 2px solid #e5e7eb; margin-top: 0.5rem; padding-top: 0.5rem; display: flex; justify-content: space-between; font-size: 1.25rem; font-weight: bold; }
+        .submit-btn { width: 100%; background: #10b981; color: white; padding: 0.75rem; border: none; border-radius: 0.5rem; font-weight: bold; margin-top: 1rem; cursor: pointer; font-size: 1.1rem; }
+        .submit-btn:hover { background: #059669; }
+        
+        .dockets-header { font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; }
+        .dockets-list { display: flex; flex-direction: column; gap: 0.75rem; }
+        .docket { border: 2px solid #fb923c; background: #ffedd5; padding: 1rem; border-radius: 0.5rem; position: relative; transition: all 0.3s; }
+        .docket.completing { border-color: #4ade80; background: #dcfce7; }
+        .docket-blur { filter: blur(4px); opacity: 0.6; }
+        .undo-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 10; }
+        .undo-btn { background: #eab308; color: white; padding: 1rem 2rem; border: none; border-radius: 0.5rem; font-weight: bold; font-size: 1.25rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .undo-btn:hover { background: #ca8a04; }
+        .docket-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .docket-number { font-size: 1rem; font-weight: bold; }
+        .docket-time { font-size: 0.875rem; color: #4b5563; }
+        .docket-buttons { display: flex; gap: 0.5rem; }
+        .docket-btn { padding: 0.5rem 0.75rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.875rem; }
+        .docket-btn.cancel { background: #ef4444; color: white; }
+        .docket-btn.complete { background: #10b981; color: white; padding: 0.5rem; }
+        .docket-items { font-size: 2.5rem; margin-top: 0.5rem; font-weight: 600; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+        .docket-item { margin-bottom: 0.25rem; }
+        
+        .summary-info { margin-bottom: 1rem; color: #4b5563; }
+        .summary-date { font-size: 1.125rem; font-weight: 600; }
+        .summary-location { font-size: 1rem; }
+        .total-sales-title { font-size: 1.875rem; font-weight: bold; margin-bottom: 0.5rem; }
+        .total-sales-amount { font-size: 2.25rem; font-weight: bold; color: #10b981; }
+        .total-sales-count { color: #6b7280; margin-top: 0.5rem; }
+        .breakdown-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; }
+        .breakdown-list { display: flex; flex-direction: column; gap: 0.75rem; }
+        .breakdown-item { padding-bottom: 0.75rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+        .breakdown-name { font-weight: 600; font-size: 1.125rem; }
+        .breakdown-amount { font-weight: bold; font-size: 1.25rem; }
+        .breakdown-qty { font-size: 0.875rem; color: #6b7280; }
+        
+        .last-dockets { margin-top: 1rem; }
+        .last-docket { border-left: 4px solid #10b981; background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.75rem; }
+        .last-docket-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem; }
+        .last-docket-number { font-size: 1.25rem; font-weight: bold; }
+        .last-docket-time { font-size: 0.875rem; color: #6b7280; margin-left: 0.75rem; }
+        .last-docket-total { font-size: 1.125rem; font-weight: bold; color: #10b981; }
+        .last-docket-items { font-size: 0.875rem; }
+        .last-docket-item { color: #374151; margin-bottom: 0.25rem; }
+        .no-dockets { text-align: center; color: #9ca3af; padding: 2rem; }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 1rem; }
+        .modal { background: white; border-radius: 0.5rem; padding: 1.5rem; max-width: 420px; width: 100%; max-height: 90vh; overflow-y: auto; }
+        .modal-title { font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem; }
+        .modal-text { margin-bottom: 1.5rem; color: #6b7280; line-height: 1.5; }
+        .modal-buttons { display: flex; gap: 0.75rem; }
+        .modal-btn { flex: 1; padding: 0.6rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.95rem; }
+        .btn-gray { background: #d1d5db; color: #1f2937; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-purple { background: #8b5cf6; color: white; }
+        .btn-green { background: #10b981; color: white; }
+
+        /* Export modal specifics */
+        .export-status { margin-top: 1rem; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.9rem; text-align: center; font-weight: 600; }
+        .export-status.success { background: #dcfce7; color: #166534; }
+        .export-status.error { background: #fee2e2; color: #991b1b; }
+        .export-status.loading { background: #dbeafe; color: #1e40af; }
+
+        /* Settings section in setup */
+        .settings-divider { border-top: 2px solid #e5e7eb; margin: 1.5rem 0; padding-top: 1.5rem; }
+        .settings-title { font-size: 1rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+
+        /* Offline banner */
+        .offline-banner { background: #f59e0b; color: white; text-align: center; padding: 0.4rem; font-weight: 600; font-size: 0.9rem; }
+
+        .icon { display: inline-block; vertical-align: middle; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+                    console.log('SW registered:', reg.scope);
+                }).catch(err => {
+                    console.log('SW registration failed:', err);
+                });
+            });
+        }
+    </script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback } = React;
+
+        // ─── SVG Icons ───
+        const Check = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        );
+        const Minus = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        );
+
+        // ─── Menu Data ───
+        const MENU_ITEMS = [
+          { name: 'Red Bean',              defaultPrice: 5, abbrev: 'R'  },
+          { name: 'Custard',               defaultPrice: 5, abbrev: 'C'  },
+          { name: 'Pizza',                 defaultPrice: 5, abbrev: 'P'  },
+          { name: 'Matcha Red Bean',       defaultPrice: 6, abbrev: 'M'  },
+          { name: 'O-Maggie',             defaultPrice: 7, abbrev: 'O'  },
+          { name: 'Dubai Chocolate',       defaultPrice: 7, abbrev: 'D'  },
+          { name: 'Black Sesame',          defaultPrice: 6, abbrev: 'B'  },
+          { name: 'Chocolate',             defaultPrice: 6, abbrev: 'CH' },
+          { name: 'Spicy Pizza',           defaultPrice: 6, abbrev: 'SP' },
+          { name: 'Chestnut',              defaultPrice: 6, abbrev: 'CN' },
+          { name: 'Red Bean Mochi',        defaultPrice: 6, abbrev: 'RM' },
+          { name: 'Matcha Red Bean Mochi', defaultPrice: 7, abbrev: 'MM' },
+          { name: 'Black Sesame Mochi',    defaultPrice: 7, abbrev: 'BM' },
+          { name: 'Ube Coconut Mochi',     defaultPrice: 7, abbrev: 'U'  },
+          { name: 'Dumpling',              defaultPrice: 5, abbrev: 'V'  }
+        ];
+
+        // ─── localStorage helpers ───
+        const LS = {
+          get: (key, fallback) => {
+            try {
+              const val = localStorage.getItem(key);
+              return val !== null ? JSON.parse(val) : fallback;
+            } catch { return fallback; }
+          },
+          set: (key, val) => {
+            try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) { console.warn('LS write failed', e); }
+          }
+        };
+
+        // ─── Main App ───
+        function FoodTruckPOS() {
+          // ── persisted state (restored from localStorage) ──
+          const [screen, setScreen]                   = useState(() => LS.get('pos_screen', 'setup'));
+          const [location, setLocation]               = useState(() => LS.get('pos_location', ''));
+          const [sessionDate, setSessionDate]         = useState(() => LS.get('pos_sessionDate', ''));
+          const [selectedMenus, setSelectedMenus]     = useState(() => LS.get('pos_selectedMenus', []));
+          const [menuPrices, setMenuPrices]           = useState(() => {
+            const saved = LS.get('pos_menuPrices', null);
+            if (saved) return saved;
+            const p = {};
+            MENU_ITEMS.forEach(i => { p[i.name] = i.defaultPrice; });
+            return p;
+          });
+          const [startingDocket, setStartingDocket]  = useState(() => LS.get('pos_startingDocket', '1'));
+          const [currentDocketNumber, setCurrentDocketNumber] = useState(() => LS.get('pos_currentDocketNumber', 1));
+          const [liveDockets, setLiveDockets]         = useState(() => LS.get('pos_liveDockets', []));
+          const [completedDockets, setCompletedDockets] = useState(() => LS.get('pos_completedDockets', []));
+          const [currentOrder, setCurrentOrder]       = useState(() => LS.get('pos_currentOrder', {}));
+          const [appsScriptUrl, setAppsScriptUrl]     = useState(() => LS.get('pos_appsScriptUrl', ''));
+
+          // ── non-persisted (transient UI state) ──
+          const [completingDockets, setCompletingDockets] = useState([]);
+          const [docketTimers, setDocketTimers]       = useState({});
+          const [confirmModal, setConfirmModal]       = useState({ show: false, type: '', docketNumber: null });
+          const [exportModal, setExportModal]         = useState({ show: false });
+          const [exportStatus, setExportStatus]       = useState(null); // null | 'loading' | 'success' | 'error'
+          const [exportError, setExportError]         = useState('');
+          const [isOffline, setIsOffline]             = useState(!navigator.onLine);
+
+          // ── persist to localStorage on every change ──
+          useEffect(() => { LS.set('pos_screen', screen); }, [screen]);
+          useEffect(() => { LS.set('pos_location', location); }, [location]);
+          useEffect(() => { LS.set('pos_sessionDate', sessionDate); }, [sessionDate]);
+          useEffect(() => { LS.set('pos_selectedMenus', selectedMenus); }, [selectedMenus]);
+          useEffect(() => { LS.set('pos_menuPrices', menuPrices); }, [menuPrices]);
+          useEffect(() => { LS.set('pos_startingDocket', startingDocket); }, [startingDocket]);
+          useEffect(() => { LS.set('pos_currentDocketNumber', currentDocketNumber); }, [currentDocketNumber]);
+          useEffect(() => { LS.set('pos_liveDockets', liveDockets); }, [liveDockets]);
+          useEffect(() => { LS.set('pos_completedDockets', completedDockets); }, [completedDockets]);
+          useEffect(() => { LS.set('pos_currentOrder', currentOrder); }, [currentOrder]);
+          useEffect(() => { LS.set('pos_appsScriptUrl', appsScriptUrl); }, [appsScriptUrl]);
+
+          // ── online/offline listener ──
+          useEffect(() => {
+            const on  = () => setIsOffline(false);
+            const off = () => setIsOffline(true);
+            window.addEventListener('online', on);
+            window.addEventListener('offline', off);
+            return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
+          }, []);
+
+          // ── helpers ──
+          const getAbbreviation = (itemName) => {
+            const item = MENU_ITEMS.find(m => m.name === itemName);
+            return item ? item.abbrev : itemName;
+          };
+
+          const toggleMenu = (menuName) => {
+            setSelectedMenus(prev =>
+              prev.includes(menuName) ? prev.filter(m => m !== menuName) : [...prev, menuName]
+            );
+          };
+
+          const updatePrice = (menuName, price) => {
+            setMenuPrices(prev => ({ ...prev, [menuName]: parseFloat(price) || 0 }));
+          };
+
+          const startSession = () => {
+            if (selectedMenus.length === 0) { alert('Please select at least one menu item'); return; }
+            const today = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+            setSessionDate(today);
+            setCurrentDocketNumber(parseInt(startingDocket) || 1);
+            setScreen('live');
+          };
+
+          const getNextDocketNumber = (current) => {
+            const next = current + 1;
+            return next > 100 ? 1 : next;
+          };
+
+          const formatDocketNumber = (num) => num.toString().padStart(3, '0');
+
+          const addToOrder = (menuName) => {
+            setCurrentOrder(prev => ({ ...prev, [menuName]: (prev[menuName] || 0) + 1 }));
+          };
+
+          const removeFromOrder = (menuName) => {
+            setCurrentOrder(prev => {
+              const n = { ...prev };
+              if (n[menuName] > 1) n[menuName]--; else delete n[menuName];
+              return n;
+            });
+          };
+
+          const submitOrder = () => {
+            if (Object.keys(currentOrder).length === 0) { alert('Please add items to the order'); return; }
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit' });
+            const newDocket = {
+              number: formatDocketNumber(currentDocketNumber),
+              items: { ...currentOrder },
+              total: Object.entries(currentOrder).reduce((s,[item,qty]) => s + menuPrices[item]*qty, 0),
+              time: timeString
+            };
+            setLiveDockets(prev => [...prev, newDocket]);
+            setCurrentDocketNumber(getNextDocketNumber(currentDocketNumber));
+            setCurrentOrder({});
+          };
+
+          const completeDocket = (docketNumber) => {
+            const docket = liveDockets.find(d => d.number === docketNumber);
+            if (docket && !completingDockets.includes(docketNumber)) {
+              setCompletingDockets(prev => [...prev, docketNumber]);
+              const timerId = setTimeout(() => {
+                setCompletingDockets(prev => prev.filter(d => d !== docketNumber));
+                setCompletedDockets(prev => [...prev, docket]);
+                setLiveDockets(prev => prev.filter(d => d.number !== docketNumber));
+                setDocketTimers(prev => { const n = {...prev}; delete n[docketNumber]; return n; });
+              }, 5000);
+              setDocketTimers(prev => ({ ...prev, [docketNumber]: timerId }));
+            }
+          };
+
+          const revertDocket = (docketNumber) => {
+            if (docketTimers[docketNumber]) {
+              clearTimeout(docketTimers[docketNumber]);
+              setDocketTimers(prev => { const n = {...prev}; delete n[docketNumber]; return n; });
+            }
+            setCompletingDockets(prev => prev.filter(d => d !== docketNumber));
+          };
+
+          const cancelDocket = (docketNumber) => setConfirmModal({ show:true, type:'cancel', docketNumber });
+
+          const confirmCancel = () => {
+            const dn = confirmModal.docketNumber;
+            if (docketTimers[dn]) { clearTimeout(docketTimers[dn]); setDocketTimers(prev => { const n={...prev}; delete n[dn]; return n; }); }
+            setLiveDockets(prev => prev.filter(d => d.number !== dn));
+            setCompletingDockets(prev => prev.filter(d => d !== dn));
+            setConfirmModal({ show:false, type:'', docketNumber:null });
+          };
+
+          const resetData = () => setConfirmModal({ show:true, type:'reset', docketNumber:null });
+
+          const confirmReset = () => {
+            setCompletedDockets([]);
+            setLiveDockets([]);
+            setCurrentOrder({});
+            setConfirmModal({ show:false, type:'', docketNumber:null });
+          };
+
+          const getSortedItems = (items) => {
+            const order = MENU_ITEMS.map(m => m.name);
+            return Object.entries(items).sort((a,b) => order.indexOf(a[0]) - order.indexOf(b[0]));
+          };
+
+          const getSummary = () => {
+            const summary = {};
+            let totalSales = 0;
+            completedDockets.forEach(docket => {
+              Object.entries(docket.items).forEach(([item, qty]) => {
+                if (!summary[item]) summary[item] = { quantity:0, amount:0 };
+                summary[item].quantity += qty;
+                summary[item].amount += qty * menuPrices[item];
+                totalSales += qty * menuPrices[item];
+              });
+            });
+            return { summary, totalSales };
+          };
+
+          // ── Google Sheets Export ──
+          const exportToSheets = async () => {
+            if (!appsScriptUrl) {
+              setExportError('Apps Script URL이 설정되지 않았습니다. Setup에서 먼저 URL을 입력해주세요.');
+              setExportStatus('error');
+              return;
+            }
+            if (completedDockets.length === 0) {
+              setExportError('내보낼 완료된 주문이 없습니다.');
+              setExportStatus('error');
+              return;
+            }
+
+            setExportStatus('loading');
+            setExportError('');
+
+            // Build payload
+            const payload = {
+              date: sessionDate,
+              location: location || 'Not specified',
+              dockets: completedDockets.map(d => ({
+                number: d.number,
+                time: d.time,
+                items: d.items,
+                total: d.total
+              })),
+              menuPrices: menuPrices,
+              summary: (() => {
+                const s = {};
+                completedDockets.forEach(d => {
+                  Object.entries(d.items).forEach(([item, qty]) => {
+                    if (!s[item]) s[item] = { quantity:0, amount:0 };
+                    s[item].quantity += qty;
+                    s[item].amount += qty * menuPrices[item];
+                  });
+                });
+                return s;
+              })(),
+              totalSales: completedDockets.reduce((sum, d) => sum + d.total, 0),
+              totalOrders: completedDockets.length
+            };
+
+            try {
+              const res = await fetch(appsScriptUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+              // no-cors returns opaque response, assume success if no throw
+              setExportStatus('success');
+            } catch (err) {
+              setExportError('네트워크 오류: ' + err.message + '\n오프라인 상태인지 확인하세요.');
+              setExportStatus('error');
+            }
+          };
+
+          // ─── RENDER: SETUP ───
+          if (screen === 'setup') {
+            return (
+              <div className="setup-container">
+                <div className="setup-card">
+                  <h1 className="setup-title">Setup</h1>
+                  
+                  <div className="form-group">
+                    <label className="form-label">Starting Docket Number</label>
+                    <input type="number" value={startingDocket} onChange={e => setStartingDocket(e.target.value)} className="form-input" min="1" max="100" />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Location</label>
+                    <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="Enter location for record" className="form-input" />
+                  </div>
+
+                  <div className="form-group">
+                    <h2 className="form-label">Select Menu Items & Set Prices</h2>
+                    <div className="menu-grid">
+                      {MENU_ITEMS.map(item => (
+                        <div key={item.name} className={`menu-item ${selectedMenus.includes(item.name)?'selected':''}`} onClick={() => toggleMenu(item.name)}>
+                          <div className="menu-item-header">
+                            <span className="menu-item-name">{item.name}</span>
+                            <div className="menu-item-price">
+                              <span>$</span>
+                              <input type="number" value={menuPrices[item.name]||''} onChange={e=>{ e.stopPropagation(); updatePrice(item.name, e.target.value); }} onClick={e=>e.stopPropagation()} className="price-input" step="0.5" />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Google Sheets Settings */}
+                  <div className="settings-divider">
+                    <div className="settings-title">Google Sheets 연동</div>
+                    <div className="form-group">
+                      <label className="form-label">Apps Script URL</label>
+                      <input type="text" value={appsScriptUrl} onChange={e => setAppsScriptUrl(e.target.value)} placeholder="https://script.google.com/macros/s/..." className="form-input" style={{fontSize:'0.85rem'}} />
+                      <p className="form-hint">Google Apps Script의 배포 URL을 여기에 붙여넣어주세요. 아래 가이드를 참고하여 설정하세요.</p>
+                    </div>
+                  </div>
+
+                  <button onClick={startSession} style={{width:'100%',background:'#10b981',color:'white',padding:'1rem',border:'none',borderRadius:'0.5rem',fontWeight:'bold',fontSize:'1.25rem',cursor:'pointer'}}>
+                    Start Session
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          // ─── RENDER: LIVE ───
+          if (screen === 'live') {
+            const orderTotal = Object.entries(currentOrder).reduce((s,[item,qty]) => s + menuPrices[item]*qty, 0);
+
+            return (
+              <div style={{minHeight:'100vh'}}>
+                {isOffline && <div className="offline-banner">⚠ 오프라인 상태 — 데이터는 로컬에 저장됩니다</div>}
+
+                {/* Confirm Modal */}
+                {confirmModal.show && (
+                  <div className="modal-overlay">
+                    <div className="modal">
+                      <h3 className="modal-title">
+                        {confirmModal.type==='cancel' ? `Cancel Docket #${confirmModal.docketNumber}?` : 'Reset All Data?'}
+                      </h3>
+                      <p className="modal-text">
+                        {confirmModal.type==='cancel' ? 'This docket will be permanently deleted.' : 'All sales data will be permanently deleted.'}
+                      </p>
+                      <div className="modal-buttons">
+                        <button onClick={()=>setConfirmModal({show:false,type:'',docketNumber:null})} className="modal-btn btn-gray">Cancel</button>
+                        <button onClick={confirmModal.type==='cancel'?confirmCancel:confirmReset} className="modal-btn btn-danger">Confirm</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="header">
+                  <h1 className="header-title">Live — {location}</h1>
+                  <div className="header-buttons">
+                    <button onClick={()=>setScreen('summary')} className="header-btn">Summary</button>
+                    <button onClick={()=>setScreen('setup')} className="header-btn danger">Setup</button>
+                  </div>
+                </div>
+
+                <div className="live-grid">
+                  {/* Left: New Order */}
+                  <div>
+                    <div className="card">
+                      <h2 className="order-header">New Order — #{formatDocketNumber(currentDocketNumber)}</h2>
+                      <div className="menu-buttons">
+                        {selectedMenus.map(menu => (
+                          <button key={menu} onClick={()=>addToOrder(menu)} className="menu-btn">
+                            <div className="menu-btn-name">{menu}</div>
+                            <div className="menu-btn-price">${menuPrices[menu]}</div>
+                          </button>
+                        ))}
+                      </div>
+
+                      {Object.keys(currentOrder).length > 0 && (
+                        <div className="order-divider">
+                          <h3 className="order-title">Current Order:</h3>
+                          {getSortedItems(currentOrder).map(([item,qty]) => (
+                            <div key={item} className="order-item">
+                              <span>{item} x {qty}</span>
+                              <div className="order-item-info">
+                                <span className="order-item-price">${(menuPrices[item]*qty).toFixed(2)}</span>
+                                <button onClick={()=>removeFromOrder(item)} className="remove-btn"><Minus size={16}/></button>
+                              </div>
+                            </div>
+                          ))}
+                          <div className="order-total"><span>Total:</span><span>${orderTotal.toFixed(2)}</span></div>
+                          <button onClick={submitOrder} className="submit-btn">Submit Order</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right: Waiting Dockets */}
+                  <div>
+                    <div className="card">
+                      <h2 className="dockets-header">Waiting Dockets ({liveDockets.length})</h2>
+                      <div className="dockets-list">
+                        {liveDockets.map(docket => {
+                          const isCompleting = completingDockets.includes(docket.number);
+                          return (
+                            <div key={docket.number} className={`docket ${isCompleting?'completing':''}`}>
+                              {isCompleting && (
+                                <div className="undo-overlay">
+                                  <button onClick={()=>revertDocket(docket.number)} className="undo-btn">UNDO</button>
+                                </div>
+                              )}
+                              <div>
+                                <div className="docket-header">
+                                  <div>
+                                    <span className="docket-number">#{docket.number}</span>
+                                    <div className="docket-time">{docket.time}</div>
+                                  </div>
+                                  {!isCompleting && (
+                                    <div className="docket-buttons">
+                                      <button onClick={e=>{e.preventDefault();e.stopPropagation();cancelDocket(docket.number);}} className="docket-btn cancel">Cancel</button>
+                                      <button onClick={()=>completeDocket(docket.number)} className="docket-btn complete"><Check size={20}/></button>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className={isCompleting?'docket-blur':''}>
+                                  <div className="docket-items">
+                                    {getSortedItems(docket.items).map(([item,qty]) => (
+                                      <div key={item} className="docket-item">{getAbbreviation(item)} x {qty}</div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          // ─── RENDER: SUMMARY ───
+          if (screen === 'summary') {
+            const { summary, totalSales } = getSummary();
+
+            return (
+              <div style={{minHeight:'100vh', background:'#f3f4f6'}}>
+                {isOffline && <div className="offline-banner">⚠ 오프라인 상태 — Export는 온라인일 때 가능합니다</div>}
+
+                {/* Confirm Modal (reset) */}
+                {confirmModal.show && (
+                  <div className="modal-overlay">
+                    <div className="modal">
+                      <h3 className="modal-title">Reset All Data?</h3>
+                      <p className="modal-text">All sales data will be permanently deleted. This cannot be undone.</p>
+                      <div className="modal-buttons">
+                        <button onClick={()=>setConfirmModal({show:false,type:'',docketNumber:null})} className="modal-btn btn-gray">Cancel</button>
+                        <button onClick={confirmReset} className="modal-btn btn-danger">Confirm</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Export Modal */}
+                {exportModal.show && (
+                  <div className="modal-overlay">
+                    <div className="modal">
+                      <h3 className="modal-title">Google Sheets로 내보내기</h3>
+                      <p className="modal-text">
+                        오늘의 매출 데이터를 Google Sheets에 저장할 것입니다.
+                      </p>
+                      <div style={{background:'#f3f4f6', borderRadius:'0.5rem', padding:'0.75rem', marginBottom:'1rem', fontSize:'0.85rem', color:'#374151'}}>
+                        <div><strong>날짜:</strong> {sessionDate}</div>
+                        <div><strong>장소:</strong> {location || 'Not specified'}</div>
+                        <div><strong>완료 주문:</strong> {completedDockets.length}건</div>
+                        <div><strong>총 매출:</strong> ${totalSales.toFixed(2)}</div>
+                      </div>
+
+                      {exportStatus === 'loading' && <div className="export-status loading">전송 중...</div>}
+                      {exportStatus === 'success' && <div className="export-status success">✓ Google Sheets에 성공적으로 저장되었습니다!</div>}
+                      {exportStatus === 'error' && <div className="export-status error">✗ {exportError}</div>}
+
+                      <div className="modal-buttons" style={{marginTop:'1rem'}}>
+                        <button onClick={()=>{setExportModal({show:false});setExportStatus(null);setExportError('');}} className="modal-btn btn-gray">닫기</button>
+                        <button onClick={exportToSheets} disabled={exportStatus==='loading'} className="modal-btn btn-purple" style={{opacity:exportStatus==='loading'?0.6:1}}>
+                          {exportStatus==='loading' ? '전송 중...' : '내보내기'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="header success">
+                  <h1 className="header-title">Sales Summary — {location}</h1>
+                  <div className="header-buttons">
+                    <button onClick={()=>setExportModal({show:true})} className="header-btn export">Export</button>
+                    <button onClick={()=>setScreen('live')} className="header-btn">Live</button>
+                    <button onClick={resetData} className="header-btn danger">Reset</button>
+                  </div>
+                </div>
+
+                <div style={{maxWidth:'1000px',margin:'0 auto',padding:'1rem'}}>
+                  <div className="card" style={{marginBottom:'1rem'}}>
+                    <div className="summary-info">
+                      <div className="summary-date">{sessionDate}</div>
+                      <div className="summary-location">Location: {location || 'Not specified'}</div>
+                    </div>
+                    <h2 className="total-sales-title">Total Sales</h2>
+                    <div className="total-sales-amount">${totalSales.toFixed(2)}</div>
+                    <div className="total-sales-count">Completed Orders: {completedDockets.length}</div>
+                  </div>
+
+                  <div className="card">
+                    <h2 className="breakdown-title">Menu Breakdown</h2>
+                    <div className="breakdown-list">
+                      {Object.entries(summary).map(([item,data]) => (
+                        <div key={item} className="breakdown-item">
+                          <span className="breakdown-name">{item}</span>
+                          <div style={{textAlign:'right'}}>
+                            <div className="breakdown-amount">${data.amount.toFixed(2)}</div>
+                            <div className="breakdown-qty">Qty: {data.quantity}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="card last-dockets">
+                    <h2 className="breakdown-title">Last 20 Dockets</h2>
+                    <div>
+                      {completedDockets.slice(-20).reverse().map(docket => (
+                        <div key={docket.number} className="last-docket">
+                          <div className="last-docket-header">
+                            <div>
+                              <span className="last-docket-number">#{docket.number}</span>
+                              <span className="last-docket-time">{docket.time}</span>
+                            </div>
+                            <div className="last-docket-total">${docket.total.toFixed(2)}</div>
+                          </div>
+                          <div className="last-docket-items">
+                            {getSortedItems(docket.items).map(([item,qty]) => (
+                              <div key={item} className="last-docket-item">{item} x {qty}</div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                      {completedDockets.length === 0 && <div className="no-dockets">No completed dockets yet</div>}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          return null;
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<FoodTruckPOS />);
+    </script>
+</body>
+</html>
